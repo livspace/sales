@@ -56,6 +56,7 @@ pr.is_test=0
 and pr.lead_source_id = 163
 and ps.weight > 249
 and pr.created_at >= '2018-01-01'
+
 group by 
 pr.id 
 having 
