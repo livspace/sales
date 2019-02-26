@@ -45,10 +45,16 @@ cgmv.amount as "CGMV",
 (tp2.amount) as "collection",
 max(case when lr.lsf_form_id=1 then lc.display_name end) as "NPS @ 10%",
 max(case when lr.lsf_form_id=2 then lc.display_name end) as "NPS @ 50%",
-max(case when lr.lsf_form_id=3 then lc.display_name end) as "NPS @ 100%"
+max(case when lr.lsf_form_id=3 then lc.display_name end) as "NPS @ 100%",
+(case when min(pcc.created_at) then TIMESTAMPDIFF(hour,prs.created_at, min(pcc.created_at)) end) as "Average First Call",
+(case when (pe6.created_at) then TIMESTAMPDIFF(hour,prs.created_at, (pe6.created_at)) end) as "Briefing call",
+(case when (pe9.created_at) then TIMESTAMPDIFF(hour,pe6.created_at, (pe9.created_at)) end) as "Proposal Ready",
+(case when (pe10.created_at) then TIMESTAMPDIFF(hour,pe6.created_at, (pe10.created_at)) end) as "Proposal Presented",
+(case when dp.email like "%.dp@livs%" then "DP" else "ID" end) as "Designer Type"
 
 from launchpad_backend.projects prs
 
+left join launchpad_backend.project_csr_calls pcc on pcc.project_id=prs.id
 left join (select id_project as "id_project", sum(amount) as "amount", date_add as "created_at" from fms_backend.ps_transactions where txn_type="CREDIT" and status="4" group by id_project) tp2 on prs.id = tp2.id_project
 
 left join (select project_id,sum(ifnull(order_products_wt,0) + ifnull(order_handling_fee,0)) as "amount" from livspace_reports2.flat_orders where order_state not in ('Cancelled', 'Blocked') group by project_id) cgmv on cgmv.project_id=prs.id
