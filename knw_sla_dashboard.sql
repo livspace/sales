@@ -28,13 +28,27 @@ date(pe17.created_at) as 'Execution in Progress date',
 date(pe18.created_at) as 'Handover with Snags date',
 date(pe19.created_at) as 'Handover with No Snags date',
 date(pe20.created_at) as 'Closed date',
-(case when pe3.created_at then DATEDIFF(days,prs.created_at, pe3.created_at) end) as "Time from Lead Creation to Prospective Lead",
-(case when pe3.created_at then DATEDIFF(days,pe3.created_at, pe10.created_at) end) as "Time from PL to Proposal Presented",
-(case when pe3.created_at then DATEDIFF(days,pe10.created_at, pe13.created_at) end) as "Time from PP to DIP"
+(case when pe3.created_at then TIMESTAMPDIFF(day,prs.created_at, pe3.created_at) end) as "Time from Lead Creation to Prospective Lead",
+(case when pe10.created_at then TIMESTAMPDIFF(day,pe3.created_at, pe10.created_at) end) as "Time from PL to Proposal Presented",
+(case when pe13.created_at then TIMESTAMPDIFF(day,pe10.created_at, pe13.created_at) end) as "Time from PP to DIP",
+(case when gmv.amount>0 and tp.amount>0 then least(tp.amount*10,gmv.amount) when gmv.amount>0 then gmv.amount else tp.amount*10 end) as "Canvas BGMV",
+s.weight as "Weight",
+prs.status as "Status",
+(case when s.weight <150 and prs.status = "INACTIVE" then "Disqualified-Presales" 
+when cm.bouncer_id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285) then "KnW"  
+when ptc.collaborator_id in (713,689,4414,5052,5175,5288,4864,1030,4941) and cm.bouncer_id not in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285,713,689,4414,5052,5175,5288,4864,1030,4941)  then "FHD"
+else "YTQ" end) as "Type",
+(case when pe15.created_at then TIMESTAMPDIFF(day,pe13.created_at, pe15.created_at) end) as "Time from 10%-50%",
+(case when pe16.created_at then TIMESTAMPDIFF(day,pe15.created_at, pe16.created_at) end) as "Time from 50%-100%",
+(case when pe20.created_at then TIMESTAMPDIFF(day,pe16.created_at, pe20.created_at) end) as "Time from 100% to closure",
+cgmv.amount as "CGMV"
 
 
 from launchpad_backend.projects prs
 
+left join (select project_id,sum(ifnull(order_products_wt,0) + ifnull(order_handling_fee,0)) as "amount" from livspace_reports2.flat_orders where order_state not in ('Cancelled', 'Blocked') group by project_id) cgmv on cgmv.project_id=prs.id
+
+left join (select project_id,id_order,order_state,order_discount,order_products_wt,order_handling_fee, order_created_at from livspace_reports2.flat_orders) vmbo on vmbo.project_id=prs.id
 left join launchpad_backend.cities ct on ct.id=prs.city_id
 left join launchpad_backend.project_stages s on s.id=prs.stage_id
 
@@ -72,8 +86,8 @@ left join (select * from launchpad_backend.project_events where new_value=10 and
 
 where prs.created_at > "2018-10-01" 
 and 
-(((ptc.collaborator_id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285,713,689,4414,5052,5175,5288,4864,1030,4941) or cm.id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285,713,689,4414,5052,5175,5288,4864,1030,4941)) and city_id not in (5,14,15)) or
+(((ptc.collaborator_id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285,713,689,4414,5052,5175,5288,4864,1030,4941) or cm.bouncer_id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285,713,689,4414,5052,5175,5288,4864,1030,4941)) and city_id not in (5,14,15)) or
 
-(( ptc.collaborator_id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285,713,689,4414,5052,5175,5288,4864,1030,4941) or cm.id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285)) and city_id in (5,14,15))
-)
+(( ptc.collaborator_id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285,713,689,4414,5052,5175,5288,4864,1030,4941) or cm.bouncer_id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285)) and city_id in (5,14,15))
+) 
 group by prs.id
