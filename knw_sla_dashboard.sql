@@ -42,12 +42,14 @@ else "YTQ" end) as "Type",
 (case when pe16.created_at then TIMESTAMPDIFF(day,pe15.created_at, pe16.created_at) end) as "Time from 50%-100%",
 (case when pe20.created_at then TIMESTAMPDIFF(day,pe16.created_at, pe20.created_at) end) as "Time from 100% to closure",
 cgmv.amount as "CGMV",
-round(sum(tp2.amount),2) as "collection"
-
+(tp2.amount) as "collection",
+max(case when lr.lsf_form_id=1 then lc.display_name end) as "NPS @ 10%",
+max(case when lr.lsf_form_id=2 then lc.display_name end) as "NPS @ 50%",
+max(case when lr.lsf_form_id=3 then lc.display_name end) as "NPS @ 100%"
 
 from launchpad_backend.projects prs
 
-left join (select id_project as "id_project", amount as "amount", date_add as "created_at" from fms_backend.ps_transactions where txn_type="CREDIT" and status="4") tp2 on prs.id = tp2.id_project
+left join (select id_project as "id_project", sum(amount) as "amount", date_add as "created_at" from fms_backend.ps_transactions where txn_type="CREDIT" and status="4" group by id_project) tp2 on prs.id = tp2.id_project
 
 left join (select project_id,sum(ifnull(order_products_wt,0) + ifnull(order_handling_fee,0)) as "amount" from livspace_reports2.flat_orders where order_state not in ('Cancelled', 'Blocked') group by project_id) cgmv on cgmv.project_id=prs.id
 
@@ -87,10 +89,15 @@ left join (select * from launchpad_backend.project_events where new_value=15 and
 left join (select * from launchpad_backend.project_events where new_value=16 and event_type = 'STAGE_UPDATED') pe19 on pe19.project_id = prs.id 
 left join (select * from launchpad_backend.project_events where new_value=10 and event_type = 'STAGE_UPDATED') pe20 on pe20.project_id = prs.id 
 
+left join launchpad_backend.lsf_responses lr on prs.id = lr.context_id and lr.question_id = 13
+left join launchpad_backend.lsf_components lc on lc.id = lr.option_id  
+
+
+
 where prs.created_at > "2018-10-01" 
 and 
 (((ptc.collaborator_id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285,713,689,4414,5052,5175,5288,4864,1030,4941) or cm.bouncer_id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285,713,689,4414,5052,5175,5288,4864,1030,4941)) and city_id not in (5,14,15)) or
 
 (( ptc.collaborator_id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285,713,689,4414,5052,5175,5288,4864,1030,4941) or cm.bouncer_id in (710,4203,94,4721,4801,4266,4597,4890,5143,4925,3829,3304,285)) and city_id in (5,14,15))
-) 
+)
 group by prs.id
