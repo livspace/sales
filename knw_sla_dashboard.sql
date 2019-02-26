@@ -41,10 +41,13 @@ else "YTQ" end) as "Type",
 (case when pe15.created_at then TIMESTAMPDIFF(day,pe13.created_at, pe15.created_at) end) as "Time from 10%-50%",
 (case when pe16.created_at then TIMESTAMPDIFF(day,pe15.created_at, pe16.created_at) end) as "Time from 50%-100%",
 (case when pe20.created_at then TIMESTAMPDIFF(day,pe16.created_at, pe20.created_at) end) as "Time from 100% to closure",
-cgmv.amount as "CGMV"
+cgmv.amount as "CGMV",
+round(sum(tp2.amount),2) as "collection"
 
 
 from launchpad_backend.projects prs
+
+left join (select id_project as "id_project", amount as "amount", date_add as "created_at" from fms_backend.ps_transactions where txn_type="CREDIT" and status="4") tp2 on prs.id = tp2.id_project
 
 left join (select project_id,sum(ifnull(order_products_wt,0) + ifnull(order_handling_fee,0)) as "amount" from livspace_reports2.flat_orders where order_state not in ('Cancelled', 'Blocked') group by project_id) cgmv on cgmv.project_id=prs.id
 
