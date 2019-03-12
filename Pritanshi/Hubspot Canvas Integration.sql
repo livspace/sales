@@ -5,19 +5,25 @@ pr.`customer_phone` as Phone_no,
 city.`display_name`as City,
 pr.id as canvas_id,
 ps.`display_name` as Canvas_Stage,
-pr.`created_at` as "canvas_lead_creation_date",
+date(pr.`created_at`) as "canvas_lead_creation_date",
 min(case when pe.`new_value`=9 then pe.`created_at` end) as "Qualification_date",
 min(case when pe.`new_value`=4 then pe.`created_at` end) as "Conversion_date",
-pst.`date_add` as 'ten_percent_date',
+date(pst.`date_add`) as 'ten_percent_date',
 pst.`amount` as 'ten_percent_amount',
 case when gmv.amount is not null then gmv.amount else pst.amount*10 end as "BGMV",
 pr.last_note as "CM_feedback",
 case when ps.weight>399 then "Converted" else "Qualified" end as Stage,
-case when ps.weight>399 then "Converted" else "Qualified" end as Final_Stage
+case when ps.weight>399 then "Converted" else "Qualified" end as Final_Stage,
+cm.name as "Primary CM",
+gm.name as "Primary GM",
+id.name as "Primary ID/DP",
+cm.email as "CM email",
+gm.email as "GM email",
+id.email as "ID email"
 from 
 launchpad_backend.projects pr 
 left join
-launchpad_backend.`cities` city 
+launchpad_backend.`cities` city
 on pr.`city_id`=city.id
 
 left join
@@ -51,14 +57,17 @@ group by id_project
 )pst 
 on pr.id=pst.id_project 
 
+left join launchpad_backend.project_settings as s on s.project_id = pr.id
+left join launchpad_backend.bouncer_users as cm on cm.bouncer_id = s.primary_cm_id  
+left join launchpad_backend.bouncer_users as gm on gm.bouncer_id = s.primary_GM_id
+left join launchpad_backend.bouncer_users as id on id.bouncer_id = s.primary_designer_id
+
 where 
 pr.is_test=0  
 and pr.lead_source_id = 163
 and ps.weight > 249
-and pr.created_at >= '2018-01-01'
-
 group by 
 pr.id 
 having 
-qualification_date >= '2019-01-01'
+Qualification_date >= '2019-01-01' or Conversion_date >= '2019-01-01'
 order by qualification_date
