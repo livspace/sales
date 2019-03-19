@@ -1,21 +1,30 @@
-
-select pr.project_id,
+select 
+pr.id as canvas_id,
 city.`display_name`as City,
-pr.`project_status` as 'status',
-pr.`primary_cm` as " Primary CM",
-pr.`primary_gm` as " Primary GM ",
-pr.`primary_designer` as " Primary ID/DP",
-"BoQ_shared_on", first_boq as "First_BOQ_amount", 
-budget_min, 
-budget_max
-from flat_tables.flat_projects pr
+pr.status as "Status",
+cm.name as "Primary CM",
+gm.name as "Primary GM",
+id.name as "Primary ID/DP"
+
+from 
+launchpad_backend.projects pr 
+left join
+launchpad_backend.`cities` city
+on pr.`city_id`=city.id
 left join
 (select project_id, min(created_at) as "BoQ_shared_on", (total_price - discount + handling_fee) as first_boq  
 from 
 boq_backend.pf_proposal
 group by project_id
 ) bq
-on pr.project_id
-where 
-pr.`is_test_project`=0 and pr.`project_created_at`>='2018-10-01'
+on pr.id = bq.project_id
+
+left join launchpad_backend.project_settings as s on s.project_id = pr.id
+left join launchpad_backend.bouncer_users as cm on cm.bouncer_id = s.primary_cm_id  
+left join launchpad_backend.bouncer_users as gm on gm.bouncer_id = s.primary_GM_id
+left join launchpad_backend.bouncer_users as id on id.bouncer_id = s.primary_designer_id
+
+where created_at > curdate() - interval 6 month
+group by 
+pr.id 
 
