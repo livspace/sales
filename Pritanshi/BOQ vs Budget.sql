@@ -4,7 +4,10 @@ city.`display_name`as City,
 pr.status as "Status",
 cm.name as "Primary CM",
 gm.name as "Primary GM",
-id.name as "Primary ID/DP"
+id.name as "Primary ID/DP",
+pr.budget_min,
+pr.budget_max,
+bq.first_boq
 
 from 
 launchpad_backend.projects pr 
@@ -16,7 +19,7 @@ left join
 from 
 boq_backend.pf_proposal
 group by project_id
-) bq
+)bq
 on pr.id = bq.project_id
 
 left join launchpad_backend.project_settings as s on s.project_id = pr.id
@@ -24,7 +27,6 @@ left join launchpad_backend.bouncer_users as cm on cm.bouncer_id = s.primary_cm_
 left join launchpad_backend.bouncer_users as gm on gm.bouncer_id = s.primary_GM_id
 left join launchpad_backend.bouncer_users as id on id.bouncer_id = s.primary_designer_id
 
-where created_at > curdate() - interval 6 month
+where pr.created_at > curdate() - interval 6 month
 group by 
 pr.id 
-
