@@ -15,12 +15,14 @@ ms.milestones as "# Milestones",
 ms.completed as "# Completed milestones",
 prs.status as "Current Status",
 ms.delayed as "# Milestones missed (Completion date > Scheduled date)",
-om.created_at as "First PO Date"
+om.created_at as "First PO Date",
+cgmv.amount as "CGMV"
 
 
 
 from launchpad_backend.projects prs
 
+left join (select project_id,sum(ifnull(order_products_wt,0) + ifnull(order_handling_fee,0)) as "amount" from livspace_reports2.flat_orders where order_state not in ('Cancelled', 'Blocked') group by project_id) cgmv on cgmv.project_id=prs.id
 left join (select id_project, min(date_add) as "created_at" from oms_backend.ps_orders group by id_project) om on om.id_project=prs.id
 left join (select id_project as "id_project", sum(amount) as "amount",min(date_add) as "created_at" from fms_backend.ps_transactions where txn_type="CREDIT" and status="4" and payment_stage in ("TEN_PERCENT","PRE_TEN_PERCENT") group by id_project) tp on prs.id = tp.id_project
 left join launchpad_backend.project_settings ps on ps.project_id=prs.id and ps.is_deleted = 0 
