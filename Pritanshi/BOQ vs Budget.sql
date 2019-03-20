@@ -22,6 +22,7 @@ left join
 (select project_id, min(created_at) as "BoQ_shared_on", (total_price - discount + handling_fee) as first_boq  
 from 
 boq_backend.pf_proposal
+where shared =1
 group by project_id
 )bq
 on pr.id = bq.project_id
