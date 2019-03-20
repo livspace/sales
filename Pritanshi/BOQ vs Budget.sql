@@ -2,6 +2,7 @@ select
 pr.id as canvas_id,
 city.`display_name`as City,
 pr.status as "Status",
+ps.display_name as "Stage",
 cm.name as "Primary CM",
 gm.name as "Primary GM",
 id.name as "Primary ID/DP",
@@ -11,6 +12,9 @@ bq.first_boq
 
 from 
 launchpad_backend.projects pr 
+left join
+launchpad_backend.project_stages ps
+on pr.`stage_id`=ps.id
 left join
 launchpad_backend.`cities` city
 on pr.`city_id`=city.id
@@ -28,5 +32,7 @@ left join launchpad_backend.bouncer_users as gm on gm.bouncer_id = s.primary_GM_
 left join launchpad_backend.bouncer_users as id on id.bouncer_id = s.primary_designer_id
 
 where pr.created_at > curdate() - interval 6 month
+and ps.weight >270
+
 group by 
 pr.id 
