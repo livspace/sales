@@ -1,0 +1,33 @@
+--http://reports.livspace.com/question/2105
+
+Select 
+lpb.id as Canvas_id,
+(case 
+when lower(project_city) like '%bangalore%' or lower(project_city) like '%hyderabad%' or lower(project_city) like '%chennai%' or lower(project_city) like '%pune%' then project_city
+when lower(project_city) like '%mumbai%' or lower(project_city) like '%thane%' then 'Mumbai'
+when lower(project_city) like '%gurgaon%' or lower(project_city) like '%dwarka%' then 'Gurgaon'
+when lower(project_city) like '%delhi%' or lower(project_city) like '%farida%' then 'Delhi'
+when lower(project_city) like '%noida%' or lower(project_city) like '%ghaz%' then 'Noida'
+end) as City,
+lpb.pincode,
+to_char(prs.project_created_at,'YYYY-MM-DD') as project_created_date,
+prs.primary_gm as GM,
+prs.primary_cm as CM,
+lpb.budget_min as Min_Budget,
+lpb.budget_max as Max_Budget,
+lpb.estimated_value,
+prs.project_stage,
+(case when prs.project_stage_weight>=400 then 'Yes' else 'NO' end) as Converted,
+sum(bgm.amount) as BGMV
+
+from launchpad_backend.projects lpb
+
+left join flat_tables.flat_projects prs on lpb.id=prs.project_id 
+
+left join flat_tables.flat_project_events pvs on prs.project_id=pvs.project_id
+
+left join launchpad_backend.project_bgmvs bgm on prs.project_id=bgm.project_id
+
+where (prs.project_created_at>='2019-03-01' and prs.project_created_at<='2019-06-30') and prs.project_stage_weight>=110 and prs.is_test_project=0
+
+group by 1,2,3,4,5,6,7,8,9,10,11
