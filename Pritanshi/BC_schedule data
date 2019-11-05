@@ -1,0 +1,32 @@
+select ab.Project_ID,cn.display_name,fp.display_name,ab.Created_at,ps.weight
+from
+launchpad_backend.project_events ab
+
+left join
+
+launchpad_backend.projects pr
+
+on ab.Project_ID=pr.ID
+
+left join
+launchpad_backend.project_stages fp   
+on pr.stage_id=fp.ID
+
+left join
+
+launchpad_backend.project_stages ps
+on pr.stage_id=ps.id
+
+left join
+
+launchpad_backend.cities cn 
+on pr.city_id=cn.id
+where ab.event_type = 'STAGE_UPDATED' and  ab.new_value=23
+
+
+and pr.lead_source_id = 174
+and pr.is_test = 0
+and (pr.lead_medium_id in (166,168,170) or pr.lead_medium_id is NULL) 
+and date_part(month,ab.created_at)=date_part(month,'2019-09-01')
+and  date_part(year,ab.created_at)=date_part(year,'2019-09-01')
+
