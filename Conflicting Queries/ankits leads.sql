@@ -1,0 +1,9 @@
+--http://reports.livspace.com/question/1900
+
+SELECT "flat_tables"."flat_projects"."project_id" AS "project_id", "flat_tables"."flat_projects"."customer_display_name" AS "customer_display_name", "flat_tables"."flat_projects"."customer_email" AS "customer_email", "flat_tables"."flat_projects"."customer_phone" AS "customer_phone", "flat_tables"."flat_projects"."inactivation_reason" AS "inactivation_reason", "flat_tables"."flat_projects"."is_test_project" AS "is_test_project", "flat_tables"."flat_projects"."primary_cm" AS "primary_cm", "flat_tables"."flat_projects"."parent_city" AS "parent_city", "flat_tables"."flat_projects"."postcode" AS "postcode", "flat_tables"."flat_projects"."primary_designer" AS "primary_designer", "flat_tables"."flat_projects"."primary_gm" AS "primary_gm", "flat_tables"."flat_projects"."project_city" AS "project_city", "flat_tables"."flat_projects"."project_created_at" AS "project_created_at", "flat_tables"."flat_projects"."project_pincode" AS "project_pincode", "flat_tables"."flat_projects"."project_property_name" AS "project_property_name", "flat_tables"."flat_projects"."project_stage" AS "project_stage", "flat_tables"."flat_projects"."project_status" AS "project_status"
+FROM "flat_tables"."flat_projects"
+WHERE (("flat_tables"."flat_projects"."primary_cm" = 'Rahul Jain'
+    OR "flat_tables"."flat_projects"."primary_cm" = 'Gourav Goyal' OR "flat_tables"."flat_projects"."primary_cm" = 'Sampada Karmarkar' OR "flat_tables"."flat_projects"."primary_cm" = 'Oshima Desouza' OR "flat_tables"."flat_projects"."primary_cm" = 'Ritu Vishnoi' OR "flat_tables"."flat_projects"."primary_cm" = 'Nikhil Malpani')
+   AND CAST("flat_tables"."flat_projects"."project_created_at" AS date) BETWEEN CAST('2019-06-01T00:00:00.000Z'::timestamp AS date) AND CAST('2019-06-30T00:00:00.000Z'::timestamp AS date))
+LIMIT 2000
+Convert this question to SQL
