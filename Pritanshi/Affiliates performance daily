@@ -1,0 +1,124 @@
+with aff as (select 
+City,
+
+count(
+case 
+
+when 
+nullif(DatePart(day, Canvas_Creation_date),0) = nullif(DatePart(day, current_date),0) 
+
+and
+    nullif(DatePart(month, Canvas_Creation_date),0) = nullif(DatePart(month, current_date),0) 
+        and 
+    nullif(DatePart(year, Canvas_Creation_date),0) = nullif(DatePart(year, current_date),0) 
+then 
+    canvas_id end) as Potential,
+    
+count(case when 
+DatePart(day, bc_scheduled_date) = DatePart(day, current_date) and
+DatePart(month, bc_scheduled_date) = DatePart(month, current_date) and 
+DatePart(year, bc_scheduled_date) = DatePart(year, current_date) and weight >129 then canvas_id end) as bc_scheduled,
+    
+count(case when 
+DatePart(day, Qualification_date) = DatePart(day, current_date) and
+DatePart(month, Qualification_date) = DatePart(month, current_date) and 
+DatePart(year, Qualification_date) = DatePart(year, current_date) and weight >249 then canvas_id end) as Qualifications,
+count(case when
+DatePart(day, Conversion_date) = DatePart(day, current_date) and
+DatePart(month, Conversion_date) = DatePart(month, current_date) and 
+DatePart(year, Conversion_date) = DatePart(year, current_date) and weight >399 then canvas_id end) as Conversions,
+sum(case when 
+DatePart(day,Conversion_date ) = DatePart(day, current_date)and
+DatePart(month, Conversion_date) = DatePart(month, current_date) and 
+DatePart(year, Conversion_date) = DatePart(year, current_date) and weight>399  then  bgmv_cr/10000000 end) as BGMV_in_Cr
+from
+(select 
+pr.id as canvas_id,
+min(date(pr.created_at)) as Canvas_Creation_date,
+sum(amount) as bgmv_cr,
+city.display_name as City,
+ps.weight as weight,
+peq.created_at as Qualification_date,
+pe.created_at as Conversion_date,
+pep.created_at as bc_scheduled_date
+from 
+launchpad_backend.projects pr 
+left join
+launchpad_backend.cities city
+on pr.city_id=city.id
+
+left join
+launchpad_backend.project_stages ps
+on pr.stage_id=ps.id
+
+left join 
+(select project_id, sum(amount) as amount
+from launchpad_backend.project_bgmvs
+group by project_id
+)gmv 
+on  pr.id= gmv.project_id
+
+left join
+(select project_id, min(created_at) as created_at
+from
+launchpad_backend.project_events
+where event_type = 'STAGE_UPDATED' and new_value=4
+
+group by project_id
+)pe 
+
+on pr.id=pe.project_id
+
+left join
+(select project_id, min(created_at) as created_at
+from
+launchpad_backend.project_events
+where event_type = 'STAGE_UPDATED' and  new_value=9
+group by project_id
+)peq
+
+on pr.id=peq.project_id
+
+left join
+(select project_id, min(created_at) as created_at
+from
+launchpad_backend.project_events
+where event_type = 'STAGE_UPDATED' and  new_value=23
+group by project_id
+)pep
+
+on pr.id=pep.project_id
+
+where pr.lead_source_id in (163,174,175,176)
+and pr.is_test = 0
+and (lead_medium_id in (166,168,170) or lead_medium_id is NULL) 
+group by 
+pr.id,city.display_name,ps.weight,pe.created_at,peq.created_at,pep.created_at )a
+group by City ),
+
+
+aff_1 as (
+
+select 
+
+'Affiliates Total' as total,
+sum(Potential) as Potential,
+sum(bc_scheduled) as bc_scheduled,
+sum(Qualifications) as Qualifications,
+sum(Conversions) as Conversions,
+sum(BGMV_in_Cr) as BGMV_in_Cr
+
+from 
+
+aff
+),
+
+final as (
+select * from aff 
+union
+select * from aff_1
+)
+
+select * from final
+
+order by City desc
