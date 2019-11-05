@@ -1,0 +1,18 @@
+select pr.property_name,count(pr.property_name) as Potential
+
+from
+   launchpad_backend.projects pr
+   
+where
+         pr.is_test = 0
+             
+
+                and pr.city_display_name ='Bangalore'
+                 and date_part(month,pr.created_at)=date_part(month,current_date)
+and  date_part(year,pr.created_at)=date_part(year,current_date)
+
+group by pr.property_name
+
+
+order by  Potential DESC
+limit 10
